@@ -8,6 +8,7 @@ if True:
     import smtplib
     import functools
     import os
+    import time
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.chrome.options import Options
@@ -16,13 +17,14 @@ if True:
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-    from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+    from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException,StaleElementReferenceException
     from selenium.webdriver.support.ui import Select
     from time import sleep
 
+exec_time= time.strftime("%Y%m%d-%H%M%S")
 
-def NoSuchElement(func):
-    num_retries = 5
+def ErrorHandlingVAM(func):
+    num_retries = 10
     @functools.wraps(func)
     def wrapper(*a, **kw):
         for i in range(num_retries):
@@ -31,15 +33,23 @@ def NoSuchElement(func):
                 break
             try:
                 return func(*a, **kw)
+            
             except NoSuchElementException:
                 sleep(2)
-                print(i)
-                print('re-try')
-                Notify_gmail()
+                print('re-try',i)
+                VAM_data.to_excel('VAM_DATA_{}.xlsx'.format(exec_time))
+                re_start.save()
+
                 return func(*a, **kw)
 
             except ElementClickInterceptedException:
                 print(ElementClickInterceptedException)
+                Notify_gmail()
+
+            except StaleElementReferenceException:
+                print(ElementClickInterceptedException)
+                sleep(2)
+                print('re-try',i)
                 Notify_gmail()
 
     return wrapper
@@ -60,7 +70,7 @@ class VAMSearch():
         self.options_RBW = ""
 
     def setup_method(self, method):
-        driver_path=r"C:\Users\Usuario\Downloads\chromedriver_win32 (80)\chromedriver.exe"
+        driver_path=r"C:\Users\60063136\Desktop\Python\chromedriver.exe"
         option = webdriver.ChromeOptions()
         chrome_prefs = dict()
         option.experimental_options["prefs"] = chrome_prefs
@@ -84,23 +94,23 @@ class VAMSearch():
                 wait = self.driver.find_element(By.ID,"ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_UpdateProgress1")
                 sleep(1.25)
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def GenerateDS(self):
         self.wait_load()
         self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Bt_ViewCDS").click()
         self.wait_load()
         sleep(0.25)
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def ClearFilter(self):
         self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Bt_ResetCriteria").click()
         self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def teardown_method(self, method):
         self.driver.quit()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_OD(self,**kwargs):
         self.wait_load()
         dropdown_OD = self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_OD")
@@ -113,7 +123,7 @@ class VAMSearch():
             
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_wt(self,**kwargs):
         self.wait_load()
         dropdown_wt = self.driver.find_element(By.ID,"ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_Wall_Weight")
@@ -127,7 +137,7 @@ class VAMSearch():
             dropdown_wt.find_element(By.XPATH, "//option[. = '{}']".format(Selection)).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_GradeOrigin(self,**kwargs):
         self.wait_load()
         dropdown_origin = self.driver.find_element(By.ID,"ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_GradeOrigine")
@@ -141,7 +151,7 @@ class VAMSearch():
             dropdown_origin.find_element(By.XPATH, "//option[. = '{}']".format(Selection)).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_Grade(self,**kwargs):
         self.wait_load()
         dropdown_grade = self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_Grade")
@@ -156,7 +166,7 @@ class VAMSearch():
             dropdown_grade.find_element(By.XPATH, "//option[. = '{}']".format(Selection)).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_Connection(self,**kwargs):
         self.wait_load()                 
         dropdown_Connection = self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_Product")
@@ -169,7 +179,7 @@ class VAMSearch():
             dropdown_Connection.find_element(By.XPATH, "//option[. = '{}']".format(Selection.strip())).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_Design(self,**kwargs):
         self.wait_load()
         dropdown_Design=self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_Isolated")
@@ -182,7 +192,7 @@ class VAMSearch():
             dropdown_Design.find_element(By.XPATH, "//option[. = '{}']".format(Selection.strip())).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_CouplingOption(self,**kwargs): 
         self.wait_load()
         dropdown_CouplingOption = self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_Option")
@@ -196,7 +206,7 @@ class VAMSearch():
             select.select_by_visible_text(Selection.strip())
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_DriftType(self,**kwargs):
         self.wait_load()
         self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_DriftType").click()
@@ -210,7 +220,7 @@ class VAMSearch():
             dropdown_DriftType.find_element(By.XPATH, "//option[. = '{}']".format(Selection.strip())).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def Selection_RBW(self,**kwargs):
         self.wait_load()
         self.driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_Criteria_WallThicknessMin").click()
@@ -223,7 +233,7 @@ class VAMSearch():
             dropdown_RBW.find_element(By.XPATH, "//option[. = '{}']".format(Selection.strip())).click()
             self.wait_load()
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def DataFrameToRow(self, df):
         df = pd.DataFrame(df.values, columns=['FieldName', 'USC_Value', 'USC_Unit', 'SI_Value', 'SI_Unit'])
         df_output = dict()
@@ -236,11 +246,10 @@ class VAMSearch():
 
         return pd.DataFrame(df_output, index=[0])
 
-    @NoSuchElement
+    @ErrorHandlingVAM
     def GetInfoFromNavegador(self):
         self.wait_load()
-        titulo = self.driver.find_element(By.ID,
-                                               "ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_DataList_CDS_ctl00_Panel_TableHeaderCDS")
+        titulo = self.driver.find_element(By.ID,"ctl00_ContentPlaceHolder1_Uc_datasheet_view_new1_DataList_CDS_ctl00_Panel_TableHeaderCDS")
         PipeProperties = self.driver.find_element(By.ID, "Tbl_PIPE_Properties")
         ConnectionProperties = self.driver.find_element(By.ID, "Tbl_CONNECTION_Properties")
         ConnectionPerformance = self.driver.find_element(By.CLASS_NAME, "tableau_loading_performances")
@@ -262,17 +271,16 @@ class VAMSearch():
 
         return row_data
 
-# FileNotFoundError: [Errno 2] No such file or directory: 're_start.json'
 
 def FileNotFound(func):
     num_retries = 5
     @functools.wraps(func)
     def wrapper(*a, **kw):
-        sleep_interval = 2
         for i in range(num_retries):
             try:
                 return func(*a, **kw)
-            except FileNotFoundError as ex:
+            except FileNotFoundError:
+                print('Error, try again ',i)
                 new_loc=input('Ingrese la ubicación del archivo json')
                 new_loc=new_loc.replace('"','')
                 return func(self=a[0],file_loc=new_loc,**kw)
@@ -313,16 +321,19 @@ class re_start_class:
         if wt_ != re_start.data['Last_wt']:
             re_start.data['Loaded_wt'].append(re_start.data['Last_wt'])
             re_start.data['Last_wt'] = wt_
+            re_start.data['Loaded_Grade']=[]
+
+
 
         if GradeOrigin != re_start.data['Last_GradeOrigin']:
             if GradeOrigin_ != '':
                 re_start.data['Loaded_GradeOrigin'].append(re_start.data['Last_GradeOrigin'])
                 re_start.data['Last_GradeOrigin'] = GradeOrigin_
-                if len(re_start.data['Loaded_Grade'])==3:
+                if len(re_start.data['Loaded_GradeOrigin'])==3:
                     re_start.data['Loaded_Grade']=[]
 
         if Grade_ != re_start.data['Last_Grade']:
-            re_start.data['Loaded_Grade'].append(re_start.data['Last_Grade'])
+            re_start.data['Loaded_Grade'].append(Grade_)
             re_start.data['Last_Grade'] = Grade_
 
 
@@ -379,8 +390,6 @@ list_Connection=RemoveSelect(Navegador.options_Connection)
 VAM_data=pd.DataFrame()
 n=0
 
-
-# Pick from last Loaded
 
 if True:
     Last_Connection = re_start.data['Last_Connection']
@@ -476,12 +485,18 @@ for Connection in list_Connection:
                             row_data['Custom_RBW'] = list_RBW[0]
 
                             VAM_data = VAM_data.append(row_data)
-                            re_start.update_data(Connection, OD, wt, GradeOrigin, Grade)
+
                             n+=1
 
                             if n%10 == 0:
-                                VAM_data.to_excel('VAM_DATA_{}.xlsx'.format(n))
+                                VAM_data.to_excel('VAM_DATA_{}.xlsx'.format(exec_time))
+                                
+                            
+                            re_start.update_data(Connection, OD, wt, GradeOrigin, Grade)
+
+                            if n%10 ==0:
                                 re_start.save()
+
 
                     Navegador.ClearFilter() ; Navegador.Selection_Connection(Selection=Connection);  Navegador.Selection_OD(Selection=OD); Navegador.Selection_wt(Selection=wt);Navegador.Selection_GradeOrigin(Selection=GradeOrigin)
 
